@@ -122,10 +122,13 @@ On iOS, prompts use the playback/spoken-audio session so they can play in
 Silent Mode. Media volume and the current audio output (including Bluetooth)
 still apply. Audio-session setup failures are surfaced rather than ignored.
 
-The Firebase iOS configuration is included in the Runner target as
-`ios/Runner/GoogleService-Info.plist`, matching `com.rizwantech.littlelearners`.
-The Android configuration is stored at `android/app/google-services.json`,
-matching the same application ID and Firebase project as iOS.
+Firebase configuration files are intentionally excluded from Git. Before
+building, download the iOS `GoogleService-Info.plist` and Android
+`google-services.json` for the registered apps in Firebase Console, and place
+them at `ios/Runner/GoogleService-Info.plist` and
+`android/app/google-services.json`. Both apps use
+`com.rizwantech.littlelearners`. These Firebase client configs are required to
+build and run the app, but should not be committed to this repository.
 Firebase Core, Auth, Firestore, Google Sign-In, and the Android Google Services
 plugin are configured. Firebase manages authentication credentials; the app
 does not copy tokens into preferences.
@@ -163,7 +166,10 @@ automatic disk persistence is disabled to avoid a second retained child cache.
 
 ### Required console / developer setup
 
-1. Publish `firestore.rules` in **Firebase Console > Firestore > Rules**, or
+1. Download the Firebase configuration files for the registered Android and
+   iOS apps and place them at the paths above. Keep these files local; `.gitignore`
+   excludes them from commits.
+2. Publish `firestore.rules` in **Firebase Console > Firestore > Rules**, or
    deploy with `firebase deploy --only firestore:rules --project YOUR_PROJECT_ID`.
    The rules allow only each parent to read/write their own profile and validate
    fields and age bands. Rules are supplied locally, **not automatically deployed**.
@@ -172,15 +178,15 @@ automatic disk persistence is disabled to avoid a second retained child cache.
    **Publish**, then tap **Retry** in the app. Do not use allow-all/test-mode
    rules for child profiles. Permission-denied errors now identify rules/access
    configuration instead of incorrectly claiming the phone has no internet.
-2. Keep Google and Apple providers enabled in Firebase Authentication.
-3. Register Android debug and production SHA fingerprints in Firebase.
-4. Enable **Sign in with Apple** for `com.rizwantech.littlelearners` in Apple
+3. Keep Google and Apple providers enabled in Firebase Authentication.
+4. Register Android debug and production SHA fingerprints in Firebase.
+5. Enable **Sign in with Apple** for `com.rizwantech.littlelearners` in Apple
    Developer and refresh provisioning. The entitlement is included for iOS.
-5. For Apple sign-in on Android, configure the Apple Services ID, Firebase
+6. For Apple sign-in on Android, configure the Apple Services ID, Firebase
    return URL, Team ID, Key ID, and private key in the Firebase Console only.
    Never put the Apple private key in this app. Revoke any exposed key and
    replace it in Firebase before testing.
-6. Verify both providers on real devices. Google and Apple sign-in require their
+7. Verify both providers on real devices. Google and Apple sign-in require their
    provider setup and network access; unit/widget tests use fake repositories.
 
 This implementation supports Android and iOS. A privacy policy, parental

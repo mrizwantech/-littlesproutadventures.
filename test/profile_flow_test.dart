@@ -6,6 +6,7 @@ import 'package:little_learners/features/auth/domain/auth_repository.dart';
 import 'package:little_learners/features/auth/presentation/auth_gate.dart';
 import 'package:little_learners/features/auth/presentation/sign_in_screen.dart';
 import 'package:little_learners/features/profile/domain/child_profile.dart';
+import 'package:little_learners/features/profile/data/guest_profile_repository.dart';
 import 'package:little_learners/features/profile/domain/profile_repository.dart';
 import 'package:little_learners/features/profile/presentation/profile_screen.dart';
 
@@ -33,6 +34,7 @@ class MemoryAuth implements AuthRepository {
 
 class MemoryProfiles implements ProfileRepository {
   final values = <String, ChildProfile>{};
+  final loaded = <String>[];
   final cleared = <String>[];
   bool offline = false;
   bool failLoad = false;
@@ -40,6 +42,7 @@ class MemoryProfiles implements ProfileRepository {
   bool accessDenied = false;
   @override
   Future<LoadedProfile> load(String parentId) async {
+    loaded.add(parentId);
     if (accessDenied) throw const ProfileAccessDenied();
     if (failLoad) throw StateError('Load denied');
     return LoadedProfile(values[parentId], isOffline: offline);
@@ -57,6 +60,108 @@ class MemoryProfiles implements ProfileRepository {
 }
 
 void main() {
+  test('Guest profiles exist only in their session and can be discarded',
+      () async {
+    final repository = GuestProfileRepository();
+    final profile = ChildProfile(
+      nickname: 'Guest',
+      ageBand: AgeBand.fourToFive,
+      avatar: ChildAvatar.boy,
+    );
+    expect((await repository.load('guest')).profile, isNull);
+    await repository.save('guest', profile);
+    expect((await repository.load('guest')).profile, same(profile));
+    expect((await GuestProfileRepository().load('guest')).profile, isNull);
+    await repository.clearLocal('guest');
+    expect((await repository.load('guest')).profile, isNull);
+  });
+
+  testWidgets('Guest can learn, edit, and leave without account persistence',
+      (tester) async {
+    final auth = MemoryAuth(null);
+    final profiles = MemoryProfiles();
+    addTearDown(auth.changes.close);
+    await tester.pumpWidget(
+      MaterialApp(home: AuthGate(auth: auth, profiles: profiles)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Get Started'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('progress won\'t be saved'), findsNothing);
+    await tester.ensureVisible(find.text('Continue as guest'));
+    await tester.tap(find.text('Continue as guest'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.textContaining('progress won\'t be saved'), findsOneWidget);
+    expect(find.byType(ProfileScreen), findsNothing);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('Parent sign-in'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+    await tester.tap(find.text('Continue as guest'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('progress won\'t be saved'), findsNothing);
+    expect(find.text('Save profile'), findsNothing);
+    await tester.enterText(find.byType(TextFormField), 'Alex');
+    await tester.ensureVisible(find.text('Boy'));
+    await tester.tap(find.text('Boy'));
+    await tester.ensureVisible(find.text('4-5 years'));
+    await tester.tap(find.text('4-5 years'));
+    await tester.ensureVisible(find.text('Continue'));
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('Hello, Alex!'), findsOneWidget);
+    expect(find.textContaining('progress won\'t be saved'), findsNothing);
+    await tester.ensureVisible(find.byIcon(Icons.star_rounded));
+    await tester.tap(find.byIcon(Icons.star_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Letters & Sounds'));
+    await tester.pumpAndSettle();
+    expect(find.text('0 of 26 letters explored'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('Edit child profile'));
+    await tester.tap(find.byTooltip('Edit child profile'));
+    await tester.pumpAndSettle();
+    expect(find.text('Alex'), findsOneWidget);
+    expect(find.textContaining('progress won\'t be saved'), findsNothing);
+    await tester.tap(find.text('Leave guest mode'));
+    await tester.pumpAndSettle();
+    expect(find.text('Get Started'), findsOneWidget);
+    await tester.tap(find.text('Get Started'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Continue as guest'));
+    await tester.tap(find.text('Continue as guest'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextFormField>(find.byType(TextFormField)).controller!.text,
+      isEmpty,
+    );
+    expect(auth.currentParentId, isNull);
+    expect(profiles.loaded, isEmpty);
+    expect(profiles.values, isEmpty);
+    expect(profiles.cleared, isEmpty);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpWidget(
+      MaterialApp(home: AuthGate(auth: auth, profiles: profiles)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Get Started'));
+    await tester.pumpAndSettle();
+    expect(find.text('Parent sign-in'), findsOneWidget);
+    await tester.tap(find.text('Continue with Google'));
+    await tester.pumpAndSettle();
+    expect(profiles.loaded, ['parent-a']);
+    expect(find.text('Save profile'), findsOneWidget);
+    expect(find.text('Leave guest mode'), findsNothing);
+  });
+
   testWidgets('Dashboard supports large text, coming soon, and avatar settings',
       (tester) async {
     tester.view.physicalSize = const Size(320, 568);
@@ -81,13 +186,19 @@ void main() {
     await tester.ensureVisible(find.byIcon(Icons.star_rounded));
     await tester.tap(find.byIcon(Icons.star_rounded));
     await tester.pumpAndSettle();
-    expect(find.text('Little steps toward reading'), findsOneWidget);
+    await tester.tap(find.text('Letters & Sounds'));
+    await tester.pumpAndSettle();
+    expect(find.text('0 of 26 letters explored'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byIcon(Icons.numbers_rounded));
     await tester.tap(find.byIcon(Icons.numbers_rounded));
-    await tester.pump();
-    expect(find.text('Math is coming soon.'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Your number journey'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.byTooltip('Edit child profile'));
     await tester.tap(find.byTooltip('Edit child profile'));
     await tester.pumpAndSettle();

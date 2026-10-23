@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../domain/auth_repository.dart';
 import 'sign_in_screen.dart';
+import '../../profile/data/guest_profile_repository.dart';
 import '../../profile/domain/profile_repository.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../welcome/presentation/welcome_screen.dart';
@@ -18,6 +19,7 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   late final Stream<String?> _changes = widget.auth.parentChanges;
   bool _entered = false;
+  GuestProfileRepository? _guestProfiles;
 
   void _getStarted() => setState(() => _entered = true);
 
@@ -39,9 +41,29 @@ class _AuthGateState extends State<AuthGate> {
         }
         final parentId = snapshot.data;
         if (parentId == null) {
+          final guestProfiles = _guestProfiles;
+          if (guestProfiles != null) {
+            return ProfileScreen(
+              key: ObjectKey(guestProfiles),
+              parentId: 'guest',
+              repository: guestProfiles,
+              isGuest: true,
+              signOut: () async {
+                await guestProfiles.clearLocal('guest');
+                if (mounted) {
+                  setState(() {
+                    _guestProfiles = null;
+                    _entered = false;
+                  });
+                }
+              },
+            );
+          }
           return SignInScreen(
             auth: widget.auth,
             onBack: () => setState(() => _entered = false),
+            onContinueAsGuest: () =>
+                setState(() => _guestProfiles = GuestProfileRepository()),
           );
         }
         return ProfileScreen(

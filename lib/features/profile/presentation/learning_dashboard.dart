@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/press_feedback.dart';
 
 import '../domain/child_profile.dart';
 import 'dashboard_mascot.dart';
 import '../../reading/presentation/reading_pathway_screen.dart';
+import '../../reading/presentation/reading_explore_screen.dart';
 import '../../listening/presentation/vocabulary_game_screen.dart';
+import '../../counting/presentation/counting_pathway_screen.dart';
 
 class LearningDashboard extends StatelessWidget {
   const LearningDashboard({
@@ -27,7 +30,17 @@ class LearningDashboard extends StatelessWidget {
 
   void _openReading(BuildContext context) {
     Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const ReadingExploreScreen()));
+  }
+
+  void _openLettersAndSounds(BuildContext context) {
+    Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const ReadingPathwayScreen()));
+  }
+
+  void _openCounting(BuildContext context) {
+    Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const CountingPathwayScreen()));
   }
 
   @override
@@ -40,8 +53,8 @@ class LearningDashboard extends StatelessWidget {
       ('Music', Icons.music_note_rounded, Color(0xFFAA69EE)),
     ];
     const activities = [
-      ('Letters & Sounds', 'Find the letter A', '🍎', Color(0xFFFFE8A1)),
-      ('Counting', 'Count 1 to 10', '123', Color(0xFFDAF4AF)),
+      ('Letters & Sounds', 'Explore the alphabet A-Z', '🍎', Color(0xFFFFE8A1)),
+      ('Counting', 'Explore numbers 1-100', '123', Color(0xFFDAF4AF)),
       ('Shapes', 'Match the shapes', '🔷', Color(0xFFE9D9FF)),
       (
         'Listening & Vocabulary',
@@ -109,14 +122,6 @@ class LearningDashboard extends StatelessWidget {
                       ),
                     ),
                   const DashboardMascot(),
-                  FilledButton.icon(
-                    onPressed: () => _openReading(context),
-                    icon: const Icon(Icons.auto_stories_rounded),
-                    label: const Text('Ready to Read'),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('A playful preschool pathway for ages 3-5',
-                      textAlign: TextAlign.center),
                   const SizedBox(height: 24),
                   LayoutBuilder(builder: (context, constraints) {
                     final width = constraints.maxWidth < 300
@@ -142,14 +147,16 @@ class LearningDashboard extends StatelessWidget {
                                   ),
                                   onPressed: () => label == 'Reading'
                                       ? _openReading(context)
-                                      : _comingSoon(context, label),
+                                      : label == 'Math'
+                                          ? _openCounting(context)
+                                          : _comingSoon(context, label),
                                   child: Icon(icon,
                                       size: 34, semanticLabel: label),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(label, style: const TextStyle(color: ink)),
                                 Text(
-                                    label == 'Reading'
+                                    label == 'Reading' || label == 'Math'
                                         ? 'Explore'
                                         : 'Coming soon',
                                     textAlign: TextAlign.center,
@@ -179,9 +186,13 @@ class LearningDashboard extends StatelessWidget {
                           side: const BorderSide(color: Color(0xFFD5EBFC)),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: InkWell(
+                        child: PressableInkWell(
                           onTap: () {
-                            if (title == 'Listening & Vocabulary') {
+                            if (title == 'Letters & Sounds') {
+                              _openLettersAndSounds(context);
+                            } else if (title == 'Counting') {
+                              _openCounting(context);
+                            } else if (title == 'Listening & Vocabulary') {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
                                   builder: (_) => const VocabularyGameScreen(),
@@ -219,7 +230,9 @@ class LearningDashboard extends StatelessWidget {
                                           style: const TextStyle(color: ink)),
                                       const SizedBox(height: 4),
                                       Text(
-                                          title == 'Listening & Vocabulary'
+                                          title == 'Listening & Vocabulary' ||
+                                                  title == 'Counting' ||
+                                                  title == 'Letters & Sounds'
                                               ? 'Play now'
                                               : 'Coming soon',
                                           style: TextStyle(

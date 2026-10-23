@@ -7,6 +7,8 @@ import 'package:little_learners/features/listening/data/prompt_speaker.dart';
 import 'package:little_learners/features/listening/domain/vocabulary_round.dart';
 import 'package:little_learners/features/reading/domain/reading_pathway.dart';
 import 'package:little_learners/features/reading/presentation/reading_pathway_screen.dart';
+import 'package:little_learners/features/reading/presentation/reading_explore_screen.dart';
+import 'package:little_learners/features/reading/presentation/reading_lesson_screen.dart';
 import 'package:little_learners/features/listening/presentation/vocabulary_game_screen.dart';
 
 class MemorySpeaker implements PromptSpeaker {
@@ -25,6 +27,107 @@ class MemorySpeaker implements PromptSpeaker {
 }
 
 void main() {
+  testWidgets(
+      'Alphabet tiles show press feedback and cancel without navigating',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: ReadingPathwayScreen(speaker: MemorySpeaker()),
+    ));
+    await tester.pumpAndSettle();
+    final tile = find.bySemanticsLabel('Open letter B');
+    await tester.scrollUntilVisible(tile, 200);
+    final material = find.descendant(
+      of: tile,
+      matching: find.byType(Material),
+    );
+    expect(tester.widget<Material>(material).color, Colors.white);
+    final press = await tester.startGesture(tester.getCenter(tile));
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(tester.widget<Material>(material).color, const Color(0xFFB6DFFF));
+    expect(find.byType(ReadingLessonScreen), findsNothing);
+    await press.cancel();
+    await tester.pumpAndSettle();
+    expect(tester.widget<Material>(material).color, Colors.white);
+    expect(find.byType(ReadingLessonScreen), findsNothing);
+    final tap = await tester.startGesture(tester.getCenter(tile));
+    await tester.pump(const Duration(milliseconds: 150));
+    expect(tester.widget<Material>(material).color, const Color(0xFFB6DFFF));
+    await tap.up();
+    await tester.pumpAndSettle();
+    expect(find.byType(ReadingLessonScreen), findsOneWidget);
+    expect(
+      tester
+          .widget<ReadingLessonScreen>(find.byType(ReadingLessonScreen))
+          .lesson
+          .letter,
+      'b',
+    );
+    Navigator.of(tester.element(find.byType(ReadingLessonScreen))).pop();
+    await tester.pumpAndSettle();
+    expect(tester.widget<Material>(material).color, Colors.white);
+    await tester.scrollUntilVisible(
+        find.text('0 of 26 letters explored'), -200);
+    expect(find.text('0 of 26 letters explored'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Reading lesson picker supports large text on small screens',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(
+      home: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(2)),
+        child: ReadingExploreScreen(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Letters & Sounds'));
+    await tester.tap(find.text('Letters & Sounds'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReadingPathwayScreen), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.byType(ReadingExploreScreen), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Choose a lesson'), -200);
+    expect(find.text('Choose a lesson'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Letters & Sounds opens the existing A-Z reading pathway',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: LearningDashboard(
+        profile: ChildProfile(nickname: 'Alex', ageBand: AgeBand.fourToFive),
+        onSettings: () {},
+        onRefresh: () {},
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Ready to Read'), findsNothing);
+    expect(find.byIcon(Icons.star_rounded), findsOneWidget);
+    await tester.ensureVisible(find.text('Letters & Sounds'));
+    final card = find.ancestor(
+      of: find.text('Letters & Sounds'),
+      matching: find.byType(Card),
+    );
+    expect(find.descendant(of: card, matching: find.text('Play now')),
+        findsOneWidget);
+    expect(find.descendant(of: card, matching: find.text('Coming soon')),
+        findsNothing);
+    await tester.tap(find.text('Letters & Sounds'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReadingPathwayScreen), findsOneWidget);
+    expect(find.text('0 of 26 letters explored'), findsOneWidget);
+    expect(find.text('Start with A'), findsNWidgets(2));
+    await tester.scrollUntilVisible(
+        find.bySemanticsLabel('Open letter Z'), 300);
+    expect(find.bySemanticsLabel('Open letter Z'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Dashboard opens listening separately from Reading',
       (tester) async {
     const channel = MethodChannel('flutter_tts');
@@ -47,12 +150,18 @@ void main() {
     expect(find.text('Tap the dog.'), findsOneWidget);
     await tester.tap(find.text('Finish'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Ready to Read'));
-    await tester.tap(find.text('Ready to Read'));
+    await tester.ensureVisible(find.byIcon(Icons.star_rounded));
+    await tester.tap(find.byIcon(Icons.star_rounded));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReadingExploreScreen), findsOneWidget);
+    expect(find.text('Choose a lesson'), findsOneWidget);
+    expect(find.byType(ReadingPathwayScreen), findsNothing);
+    await tester.tap(find.text('Letters & Sounds'));
     await tester.pumpAndSettle();
     expect(find.byType(ReadingPathwayScreen), findsOneWidget);
     expect(find.byType(VocabularyGameScreen), findsNothing);
-    expect(find.text('1. Story Time'), findsOneWidget);
+    expect(find.text('Start with A'), findsNWidgets(2));
+    expect(find.text('0 of 26 letters explored'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -71,16 +180,16 @@ void main() {
     expect(positions, {0, 1, 2});
   });
 
-  testWidgets('Pathway exposes every stage and labels unfinished activities',
+  testWidgets('Pathway shows the current letter, progress, and every letter',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: ReadingPathwayScreen()));
     await tester.pumpAndSettle();
-    expect(find.text('1. Story Time'), findsOneWidget);
-    expect(find.text('Play Picture Words'), findsNothing);
-    expect(find.textContaining('Listen & Discover'), findsNothing);
+    expect(find.text('Start with A'), findsNWidgets(2));
+    expect(find.text('Name: ay  •  Sound: /æ/'), findsOneWidget);
+    expect(find.text('Other early literacy ideas'), findsNothing);
+    expect(find.text('For grown-ups: session notes'), findsNothing);
     await tester.scrollUntilVisible(
-        find.text('5. Ready for Kindergarten'), 300);
-    expect(find.text('5. Ready for Kindergarten'), findsOneWidget);
+        find.bySemanticsLabel('Open letter Z'), 300);
     expect(find.byIcon(Icons.lock), findsNothing);
   });
 

@@ -10,10 +10,12 @@ class ProfileScreen extends StatefulWidget {
     required this.parentId,
     required this.repository,
     required this.signOut,
+    this.isGuest = false,
   });
   final String parentId;
   final ProfileRepository repository;
   final Future<void> Function() signOut;
+  final bool isGuest;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -139,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
               onPressed: _busy || _loading ? null : _signOut,
-              child: const Text('Sign out')),
+              child: Text(widget.isGuest ? 'Leave guest mode' : 'Sign out')),
         ],
       ),
       body: Stack(
@@ -320,7 +322,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 24),
                             FilledButton(
                               onPressed: _busy ? null : _save,
-                              child: const Text('Save profile'),
+                              child: Text(
+                                  widget.isGuest ? 'Continue' : 'Save profile'),
                             ),
                             if (profile != null)
                               TextButton(

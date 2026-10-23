@@ -42,6 +42,15 @@ Firebase and Google sign-in, then waits for Firebase's restored authentication
 state. Every fresh launch shows the illustrated Mimo storytime home screen,
 including when a parent session is already saved. Get Started opens Google/Apple
 parent sign-in if signed out, or loads the saved child profile if signed in.
+Signed-out users can also choose **Continue as guest**. A confirmation alert
+explains that guest progress will not be saved; Cancel stays on sign-in and
+Continue starts the guest session. Guest profile setup and activities work without
+an account; the temporary profile stays only in memory, never in Firestore or the
+device profile cache. No guest warning is shown on the dashboard or in profile
+settings. **Leave guest mode** returns home and discards the temporary
+profile; restarting the app also discards it. Signing in does not migrate a guest
+profile. Reading and listening activity progress remains session-only for all
+users.
 Parents without a child profile complete setup. The sign-in back control returns
 to home, and signing out also returns home. Resuming an app already in memory
 preserves the current screen; hot restart or a new launch starts at home.
@@ -51,6 +60,11 @@ background. The colorful outlined title, tagline, and Get Started button
 are Flutter widgets, not text baked into the image. The title approximates
 the reference lettering using the system font. Controls respect safe areas and
 the foreground scrolls on small screens or with large text.
+Standard buttons and reading/dashboard lesson cards use a visible press-down
+scale and stronger blue ink feedback. Press-down feedback starts on pointer
+contact, not after a long press; release or cancellation restores the control.
+Reduce Motion removes the scale animation duration. Disabled buttons do not react,
+and navigation is not artificially delayed.
 
 Parent sign-in reuses the meadow background with a readable white card.
 Google uses its bundled official G artwork from
@@ -62,16 +76,21 @@ Flutter's error handler and show a Retry button.
 
 After profile setup, the learning dashboard puts the child's avatar and
 personalized greeting first instead of a large app title. Its settings button
-opens profile editing and sign-out. Reading opens the Ready to Read pathway,
+opens profile editing and sign-out. The Reading / Explore shortcut opens a
+reading lesson-selection page. Its first option,
+**Letters & Sounds**, opens the existing A-Z alphabet lessons; future reading
+lessons can be added alongside it. Today's Activities **Letters & Sounds**
+remains a direct shortcut to those alphabet lessons,
 and the separate Listening & Vocabulary card opens the picture-listening game.
-That game is not part of Reading. Math, Art, Music,
+That game is not part of Reading. Math and Today's Activities **Counting** open
+the new counting journey. Art, Music,
 the other activity cards, Library, and Progress remain clearly labeled or
 announced as coming soon.
 The dashboard greeting includes the supplied transparent sprout wave pose.
 Flutter adds a brief gentle bob and tilt, then rests; this is whole-image motion,
 not an independently rigged waving arm. The animation respects Reduce Motion.
 
-## Ready to Read (U.S. preschool, ages 3-5)
+## Ready to Read (proposed U.S. preschool pathway)
 
 The five proposed reading stages are Story Time, Rhyme & Rhythm,
 Sound Detectives, Letter Explorers, and Ready for Kindergarten. These are
@@ -81,17 +100,129 @@ The pathway uses the preschool language/literacy domains of the
 [Head Start Early Learning Outcomes Framework](https://headstart.gov/school-readiness/effective-practice-guides/language-literacy)
 as its foundation. [Common Core kindergarten foundational reading standards](https://www.thecorestandards.org/ELA-Literacy/RF/K/)
 are a later destination, not preschool entry requirements. This initial
-release provides reading pathway descriptions, not playable reading activities.
-The separate listening game supports attending/understanding and vocabulary;
-it does not teach decoding or implement the whole framework.
+The Ready to Read screen now generates a reusable letter lesson for each
+letter, beginning with A and continuing in alphabetical order. The letter
+name and one representative sound are shown separately. For A, the letter
+name is “ay”; the first reading sound is short /æ/, as in apple. Words appear
+only after all their letter-sound connections have been introduced. Current
+word examples include *am*, *man*, *in*, *map*, and *sat*.
 
-All five reading stage descriptions are accessible without locks.
-Stories and the other in-app reading activities are explicitly coming
-soon, with suggestions for shared off-screen exploration. Books and rhymes
-should remain available from the beginning as those features are added.
-The suggested 5-10 minute routine is guidance, not a timer or enforced length.
+The Ready to Read screen shows the current letter (name, sound, and words to
+try), how many letters have been explored, and an A–Z grid for opening any
+letter. Alphabet tiles show a blue pressed background and stronger border while
+touched, with visible ink feedback before opening a lesson. Cancelling a tap
+restores the tile without opening it.
+Each lesson screen has previous/next letter arrows in the footer, on
+either side of **Continue**; jumping does not mark a letter as explored.
+Activity screens show the sprout with a speech bubble, a large heading, big
+letter cards, and a **Hear again** button. In tap-a-letter activities,
+**Continue** stays locked until the child taps the matching letter. The child can finish a letter
+lesson to open the next letter directly or stop early. The final action names the next letter; intermediate steps say
+“Continue.” The sprout moves gently during speech playback and briefly
+celebrates completed practice without sound effects. Completing a letter opens
+a celebration pop-up that stays visible until the child chooses **Next letter**
+(or **Finish alphabet** after Z). Skipping with the letter arrows does not
+trigger completion or a celebration. Each pop-up plays one of three randomly
+selected, short bundled cheers using the alternative Kokoro `af_bella` voice:
+"Yay! You did it!", "Woo-hoo! Great job!", or "Amazing! Way to go!".
+This voice has no explicit emotion control, so listening approval is still needed.
+**Hear celebration again** replays the
+same phrase; playback errors show a retry control. Continuing stops celebration
+audio before the next letter's narration starts. Reduced-motion settings
+keep it still. Letter and activity evidence is session-only and is not a mastery score
+or formal reading level. This is a proposed curriculum, not an officially
+validated phonics program. Educator review is needed.
+
+Reading narration (directions, letter names, and feedback) is pre-recorded
+with the open-source Kokoro-82M voice (Apache-2.0, voice `af_heart`) and
+bundled in `assets/audio/reading/`, so it works offline with no network calls,
+usage limits, or API keys. Letter names use explicit phonemes so "ay" and
+"aych" are not misread. Each letter also has a recorded sound
+(held for m, s, f, l, n, r, v, z; a short "uh" after stop sounds such as
+"buh"). For short vowels (a, e, i, o, u) the introduction says the sound in context
+("It sounds like a, a, apple.") and the vowel sound clips use the same phrase.
+For other letters the sound plays after the introduction. Sounds also play from the **Sound**
+button, in "Listen to the sound" activities, and from tappable sounds in word
+and blend activities. Blended words are not recorded; a grown-up models
+joining the sounds. All clips still need an educator listening review. The separate Listening & Vocabulary game continues
+to use device text-to-speech and tracks listening activities separately;
+picture identification does not count as word reading.
+Reading has no device-voice fallback. If a clip cannot play, the lesson shows
+a short error and a retry button. Every spoken sentence lives in
+`lib/features/reading/domain/reading_narration.dart`; a test fails if any
+sentence lacks a recording. After editing narration, regenerate the clips as
+described in `tool/reading_audio/README.md`.
+
+The suggested 5-8 minute routine is guidance, not a timer or enforced length.
 Age bands in existing profiles are unchanged; age does not restrict access.
 Parent readiness input and adaptive activity selection are not implemented.
+
+## Counting: the 1-100 journey
+
+Math / Explore and the Counting activity open the same number journey.
+All **100 numbers** are playable using reusable activities, not 100 separate
+screen implementations. The range selector shows ten numbers at a time
+(1-10, 11-20, through 91-100).
+
+For **1-10**, each number has three activities:
+
+1. **Meet the number:** a large numeral, number name, and matching group of
+   stars, guided by the green sprout and bundled narration.
+2. **Count together:** tap each star once. It lights up and receives its spoken
+   count; the next star waits until the voice finishes, so counts do not overlap.
+   After counting, choose the total. A wrong total invites a recount. An optional
+   **Move stars and count again** rearranges the same group to show that its
+   quantity has not changed.
+3. **Give me this many:** move stars from a larger collection into a basket by
+   tapping, remove extras by tapping them in the basket, and check the group.
+   Empty, undersized, and oversized groups receive gentle retry feedback.
+
+For **11-100**, the same flow switches to place value:
+
+1. **Meet the number:** numeral, name, full ten-frames, and remaining single
+   stars. Each frame visibly contains two rows of five stars.
+2. **Count tens and ones:** tap each ten-frame once to hear 10, 20, 30, etc.,
+   then tap the remaining ones (for 32: 10, 20, 30, 31, 32). Ones wait until
+   every ten-frame is counted. Choose the total from four nearby numbers.
+3. **Build the number:** add/remove whole tens and single ones, then check
+   both the total and its tens/ones representation. Ten ones can be traded
+   for a ten. Incorrect and oversized builds receive retry feedback.
+
+For example, 73 uses seven frames and three singles, not 73 separate taps.
+100 is shown as ten tens with no remaining ones. The most demanding count
+requires only 18 taps (99: nine tens and nine ones). Build controls allow
+up to 11 tens and 10 ones so oversized answers can be corrected without an
+unbounded collection; **Trade 10 ones for a ten** preserves the total.
+
+Continue stays disabled until the required activity is complete. Finishing a
+number shows a celebration with one of the existing three bundled cheers, then
+opens the next number. Number 100 finishes the journey and returns to the
+journey. Previous/next arrows allow exploration without recording completion.
+Layout scrolls on small screens and with large text; controls have press feedback.
+
+The journey keeps separate session practice evidence for counting distinct
+objects, choosing a total, making a requested quantity, and practicing tens/ones,
+including wrong
+attempts and replay/retry assistance. Introductions are labeled guided exposure,
+not evidence of independent numeral recognition. Saying the counting sequence
+is **not assessed**. Grouped counting and building record place-value practice,
+not individual-object counting evidence. These activities are practice,
+not a validated developmental assessment or mastery score. Evidence is committed
+when a number is completed; leaving early does not mark it explored. Closing the
+counting journey or restarting discards its progress for guests and signed-in
+users alike; there is no new cloud or device persistence.
+
+Number-neighbor games, hundred-chart activities, counting-pattern games by 10s,
+5s, and 2s, and feed-the-character/number-train games are still future work.
+
+Counting narration uses the existing bundled audio player and shared manifest in
+`assets/audio/reading/`, with `counting_*` clip names. It works offline and does
+not replace the reading recordings. Errors are reported and show **Retry voice**;
+backgrounding, leaving, or advancing stops speech. The new clips use Kokoro
+`af_heart` and still need listening/educator review. There is one short number-name
+clip per number (1-100); larger-number prompts combine reusable instructions and
+those clips instead of recording hundreds of full sentences. Existing 1-10
+introduction/total/group sentences are retained for natural small-number speech.
 
 ## Listening & Vocabulary
 
@@ -115,12 +246,13 @@ Exploring / Practicing / Comfortable are planned skill-specific summaries, not
 labels inferred from a single correct response or completing this session.
 The existing child-profile Firestore schema and rules are unchanged.
 
-Spoken prompts use `flutter_tts`. A full native rebuild (not hot reload) is
-required after adding the plugin. Android includes its TTS service query;
-iOS uses the system speech synthesizer without microphone permission.
-On iOS, prompts use the playback/spoken-audio session so they can play in
-Silent Mode. Media volume and the current audio output (including Bluetooth)
-still apply. Audio-session setup failures are surfaced rather than ignored.
+Listening & Vocabulary spoken prompts use `flutter_tts`. A full native rebuild
+(not hot reload) is required after adding the plugin. Android includes its TTS
+service query; iOS uses the system speech synthesizer without microphone
+permission. On iOS, these prompts use the playback/spoken-audio session so
+they can play in Silent Mode. Media volume and the current audio output
+(including Bluetooth) still apply. Audio-session setup failures are surfaced
+rather than ignored.
 
 Firebase configuration files are intentionally excluded from Git. Before
 building, download the iOS `GoogleService-Info.plist` and Android
@@ -129,9 +261,9 @@ them at `ios/Runner/GoogleService-Info.plist` and
 `android/app/google-services.json`. Both apps use
 `com.rizwantech.littlelearners`. These Firebase client configs are required to
 build and run the app, but should not be committed to this repository.
-Firebase Core, Auth, Firestore, Google Sign-In, and the Android Google Services
-plugin are configured. Firebase manages authentication credentials; the app
-does not copy tokens into preferences.
+Firebase Core, Auth, Firestore, Google Sign-In, and the
+Android Google Services plugin are configured. Firebase manages
+authentication credentials; the app does not copy tokens into preferences.
 
 ## Parent account and child profile
 
@@ -188,7 +320,6 @@ automatic disk persistence is disabled to avoid a second retained child cache.
    replace it in Firebase before testing.
 7. Verify both providers on real devices. Google and Apple sign-in require their
    provider setup and network access; unit/widget tests use fake repositories.
-
 This implementation supports Android and iOS. A privacy policy, parental
 consent requirements, account/profile deletion UX, store child-safety disclosures,
 and release signing must be addressed before public release.

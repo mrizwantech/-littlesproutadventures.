@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import '../domain/auth_repository.dart';
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, required this.auth, this.onBack});
+  const SignInScreen({
+    super.key,
+    required this.auth,
+    this.onBack,
+    this.onContinueAsGuest,
+  });
   final AuthRepository auth;
   final VoidCallback? onBack;
+  final VoidCallback? onContinueAsGuest;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -14,6 +20,29 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   bool _busy = false;
   String? _error;
+
+  Future<void> _continueAsGuest() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Continue as guest?'),
+        content: const Text(
+          'Your progress won\'t be saved. Your temporary profile will be lost when you leave guest mode or restart the app.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+    if (mounted && confirmed == true) widget.onContinueAsGuest?.call();
+  }
 
   Future<void> _signIn(Future<void> Function() action) async {
     setState(() {
@@ -130,6 +159,13 @@ class _SignInScreenState extends State<SignInScreen> {
                             label: const Text('Sign in with Apple',
                                 textAlign: TextAlign.center),
                           ),
+                          if (widget.onContinueAsGuest != null) ...[
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: _busy ? null : _continueAsGuest,
+                              child: const Text('Continue as guest'),
+                            ),
+                          ],
                           if (_busy)
                             const Padding(
                               padding: EdgeInsets.all(16),

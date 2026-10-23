@@ -1,4 +1,4 @@
-# Reading and counting narration audio
+# Reading, counting, and shapes narration audio
 
 The Reading lessons play pre-recorded clips from `assets/audio/reading/`.
 `manifest.json` maps each exact sentence to its clip. The clips are generated
@@ -82,3 +82,17 @@ dart run tool/reading_audio/export_script.dart > /tmp/reading_script.json
 
 `--missing-only` checks exact sentence mappings and file existence; omit it to
 regenerate existing clips after changing voice, speed, or pronunciation.
+
+## Shapes clips
+
+The export also includes `ShapesNarration` from
+`lib/features/shapes/domain/shapes_curriculum.dart`. Generate its instructions
+and feedback without replacing the other lessons:
+
+```sh
+dart run tool/reading_audio/export_script.dart > /tmp/reading_script.json
+~/.kokoro-venv/bin/python tool/reading_audio/generate.py /tmp/reading_script.json --only-prefix shapes_ --missing-only
+```
+
+Shapes use the same offline player and `af_heart` voice. Completion reuses the
+existing celebration clips. A full export/regeneration covers all three domains.

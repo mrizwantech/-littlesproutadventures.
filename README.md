@@ -24,6 +24,23 @@ to preserve the existing Firebase app registrations.
 The welcome and Flutter splash titles use the new name as responsive Flutter
 text rather than lettering baked into an image.
 
+## Shapes
+
+Today's Activities / Shapes opens a garden with circle, square, and triangle.
+Each lesson has three screens: meet the shape (with replay and an animated
+outline demonstration), find it among two unlabeled choices, and select both
+matching shapes before checking. Cards vary size, color, and position on
+revisits; some squares and triangles are rotated. Wrong choices give feedback
+and allow retry; completing a lesson opens the existing voice celebration.
+Directions use bundled offline narration.
+
+The grown-up summary separates recognition and matching attempts, including
+replay/retry assistance. Describing is not assessed; viewing an introduction or
+following the outline does not count as recognition. Only completed lessons
+contribute results, and progress lasts while the shape garden is open, for both
+signed-in and guest users. Rectangle, finger tracing, drag-and-drop matching,
+everyday-object questions, and mixed review are not included yet.
+
 ## Startup
 
 The splash uses the text-free `assets/images/little_learners_meadow.png`, centered

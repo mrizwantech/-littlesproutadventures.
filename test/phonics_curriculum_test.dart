@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:little_learners/features/listening/data/prompt_speaker.dart';
 import 'package:little_learners/features/counting/domain/counting_narration.dart';
+import 'package:little_learners/features/shapes/domain/shapes_curriculum.dart';
 import 'package:little_learners/features/reading/data/bundled_reading_prompt_speaker.dart';
 import 'package:little_learners/features/reading/domain/phonics_curriculum.dart';
 import 'package:little_learners/features/reading/domain/reading_narration.dart';
@@ -338,8 +339,11 @@ void main() {
     final manifest = BundledReadingPromptSpeaker.parseManifest(
       File(BundledReadingPromptSpeaker.manifestPath).readAsStringSync(),
     );
-    expect(manifest.keys.toSet(),
-        {...ReadingNarration.all.values, ...CountingNarration.all.values});
+    expect(manifest.keys.toSet(), {
+      ...ReadingNarration.all.values,
+      ...CountingNarration.all.values,
+      ...ShapesNarration.all.values,
+    });
     for (final file in manifest.values) {
       final clip = File('${BundledReadingPromptSpeaker.audioDirectory}/$file');
       expect(clip.existsSync(), isTrue, reason: file);

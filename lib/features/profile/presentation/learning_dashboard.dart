@@ -7,6 +7,7 @@ import '../../reading/presentation/reading_pathway_screen.dart';
 import '../../reading/presentation/reading_explore_screen.dart';
 import '../../listening/presentation/vocabulary_game_screen.dart';
 import '../../counting/presentation/counting_pathway_screen.dart';
+import '../../shapes/presentation/shapes_pathway_screen.dart';
 
 class LearningDashboard extends StatelessWidget {
   const LearningDashboard({
@@ -192,6 +193,11 @@ class LearningDashboard extends StatelessWidget {
                               _openLettersAndSounds(context);
                             } else if (title == 'Counting') {
                               _openCounting(context);
+                            } else if (title == 'Shapes') {
+                              Navigator.of(context)
+                                  .push(MaterialPageRoute<void>(
+                                builder: (_) => const ShapesPathwayScreen(),
+                              ));
                             } else if (title == 'Listening & Vocabulary') {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
@@ -232,6 +238,7 @@ class LearningDashboard extends StatelessWidget {
                                       Text(
                                           title == 'Listening & Vocabulary' ||
                                                   title == 'Counting' ||
+                                                  title == 'Shapes' ||
                                                   title == 'Letters & Sounds'
                                               ? 'Play now'
                                               : 'Coming soon',

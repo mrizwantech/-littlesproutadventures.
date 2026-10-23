@@ -1,4 +1,4 @@
-// Exports reading and counting narration for tool/reading_audio/generate.py.
+// Exports lesson narration for tool/reading_audio/generate.py.
 //
 // Usage: dart run tool/reading_audio/export_script.dart > script.json
 import 'dart:convert';
@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:little_learners/features/reading/domain/phonics_curriculum.dart';
 import 'package:little_learners/features/reading/domain/reading_narration.dart';
 import 'package:little_learners/features/counting/domain/counting_narration.dart';
+import 'package:little_learners/features/shapes/domain/shapes_curriculum.dart';
 
 /// Marks letter names as `{x}` and short-vowel sounds as `[x]` so the
 /// generator can force exact pronunciations. Throws if the markup no longer
@@ -62,6 +63,8 @@ void main() {
         if (key.startsWith('celebration_')) 'voice': 'af_bella',
       },
     for (final MapEntry(:key, :value) in CountingNarration.all.entries)
+      {'key': key, 'text': value, 'speech': value},
+    for (final MapEntry(:key, :value) in ShapesNarration.all.entries)
       {'key': key, 'text': value, 'speech': value},
   ];
   stdout.writeln(const JsonEncoder.withIndent('  ').convert(entries));

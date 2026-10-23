@@ -236,7 +236,20 @@
     "Give me nine stars. Tap stars to put them in the basket.": "counting_give_9.m4a",
     "This is ten.": "counting_meet_10.m4a",
     "Ten stars altogether.": "counting_total_10.m4a",
-    "Give me ten stars. Tap stars to put them in the basket.": "counting_give_10.m4a"
+    "Give me ten stars. Tap stars to put them in the basket.": "counting_give_10.m4a",
+    "This is a circle. It is round, with no straight sides or corners.": "shapes_meet_circle.m4a",
+    "Find the circle.": "shapes_find_circle.m4a",
+    "Find both circles.": "shapes_match_circle.m4a",
+    "This is a square. It has four equal straight sides and four corners.": "shapes_meet_square.m4a",
+    "Find the square.": "shapes_find_square.m4a",
+    "Find both squares.": "shapes_match_square.m4a",
+    "This is a triangle. It has three straight sides and three corners.": "shapes_meet_triangle.m4a",
+    "Find the triangle.": "shapes_find_triangle.m4a",
+    "Find both triangles.": "shapes_match_triangle.m4a",
+    "You found it! Great shape spotting!": "shapes_correct.m4a",
+    "Both shapes match! Great job!": "shapes_matched.m4a",
+    "Look at the sides and corners. Try again.": "shapes_retry.m4a",
+    "Follow the outline. Look at the sides and corners.": "shapes_explore.m4a"
   },
   "clipSpeeds": {
     "celebration_1.m4a": 1.08,

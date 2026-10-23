@@ -10,6 +10,13 @@ screen.
 - Android application ID and namespace: `com.rizwantech.littlelearners`
 - iOS bundle ID: `com.rizwantech.littlelearners`
 
+The iOS and Android launcher icons use the supplied sprout artwork in
+`assets/branding/app_icon.png`. On macOS, regenerate all native icon sizes with
+`swift tool/generate_launcher_icons.swift`. Generated icons are opaque, square
+images; the operating system applies its launcher mask. The full display name
+may be shortened beneath the icon by the device launcher. Stop and rebuild the
+app to apply native icon changes; hot reload does not update them.
+
 Use this identifier when registering the Android and iOS apps in Firebase.
 The workspace folder name does not affect the app identity.
 The internal Dart package and native identifiers are intentionally unchanged
